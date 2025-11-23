@@ -91,7 +91,6 @@ class GuerrillaSession:
         except json.JSONDecodeError:
             print(f"[GuerrillaSession ERROR] Failed to decode JSON response: {response.text}")
             raise Exception("Failed to decode API response.")
-            
         return None 
 
     def get_inbox_list(self, offset=0):
@@ -99,8 +98,8 @@ class GuerrillaSession:
             raise Exception("No active session.")
         response = self._api_call('get_email_list', {'offset': str(offset)})
         if response and 'list' in response:
-            return self.inbox # Return the raw data
-        return [] # Return empty list on failure
+            return self.inbox
+        return []
 
     def _get_email_ids_from_indices(self, indices_str):
         if not self.inbox:

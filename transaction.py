@@ -75,9 +75,9 @@ class EmailResponseGenerator:
                 return random.choice(self.templates['inbox_empty'])
             list_text = ""
             for i, email in enumerate(inbox, 1):
-                list_text += f"  {i}. From: {email['mail_from']}, Subject: {email['mail_subject']} (ID: {email['mail_id']})\n"
+                list_text += f"  {i}. From: {email['mail_from']}, Subject: {email['mail_subject']}\n"
             template = random.choice(self.templates['list_emails'])
-            return template.format(list_text=list_text.strip())
+            return template.format(list_text=list_text.rstrip())
         elif intent_type == 'delete_emails':
             template = random.choice(self.templates['delete_emails'])
             return template.format(result_text=content_data['result_text'])
@@ -282,9 +282,9 @@ class EmailHandler:
                     if email_index_str:
                         email_content = session.fetch_email_body(email_index_str)
                         if isinstance(email_content, dict) and 'mail_body' in email_content:
-                            response = f"Opening email {email_content['mail_id']}..."
+                            subject = email_content.get('mail_subject', 'No Subject')
+                            response = f"Opening email {email_index_str}: '{subject}'"
                             action_data = {'action': 'view_email', 'data': email_content}
-                            new_state = None 
                         else:
                             response = f"Error: Could not fetch email index {email_index_str}."
                             new_state = 'email_manage_loop'

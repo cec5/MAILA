@@ -103,6 +103,7 @@ class ChatbotGUI:
         self.session_id = None
         self.email_address = None
         self.chat_stack = ["normal"]
+        self.state_prompts = {}
         self.IDENTITY_TASK_STATES = {"awaiting_name", "awaiting_name_confirm"}
         self.DISCOVER_TASK_STATES = {"general_help_loop", "capabilities_help"}
         self.EMAIL_TASK_STATES = set(EMAIL_TASK_STATES)
@@ -114,6 +115,22 @@ class ChatbotGUI:
         self.email_handler = EmailHandler()
         self.create_widgets()
         self.add_chat_message("Hello! I am Maila, let's chat!", "bot")
+        self.what_now_prompts = {
+            "normal": "You can chat with me, ask a question, ask for help, or manage your temporary email (e.g., 'start a new session').",
+            "awaiting_name_confirm": "You can say 'yes' to confirm setting your name, or 'no' to cancel.",
+            "awaiting_name": "You can type in the name you'd like me to call you, or say 'cancel'.",
+            "general_help_loop": "You can ask about 'commands', 'identification', or 'capabilities'. You can also say 'no' to exit help.",
+            "capabilities_help": "You can ask for more info on 'small talk', 'Q&A', 'identification', or 'email'. You can also say 'no' to exit.",
+            "email_manage_loop": "You are in your email session. You can say 'list emails', 'view [number]', 'delete [number]', 'download [number]', or 'end session'.",
+            "awaiting_session_start_confirm": "You can say 'yes' to create a new temporary email session, or 'no' to decline.",
+            "awaiting_session_restore_confirm": "You can say 'yes' to try again, 'no' to cancel, or just enter your session ID.",
+            "awaiting_session_restore": "You can type or paste your 24-character session ID, or say 'cancel'.",
+            "awaiting_session_end_confirm": "You can say 'yes' to permanently end your session, or 'no' to keep it active.",
+            "awaiting_view_index": "You can enter the number (index) of the email you want to read, or say 'cancel'.",
+            "awaiting_delete_index": "You can enter the email number(s) to delete (e.g., '1', '1, 3', '2-5', or 'all'), or say 'cancel'.",
+            "awaiting_download_index": "You can enter the email number(s) to download (e.g., '1', '1, 3', '2-5', or 'all'), or say 'cancel'.",
+            "awaiting_delete_all_confirm": "You must say 'yes' to confirm deleting ALL emails, or 'no' to cancel. This cannot be undone."
+        }
 
     def create_widgets(self):
         self.chat_frame = tk.Frame(self.root, bg=CHAT_BG, bd=0)
@@ -188,23 +205,33 @@ class ChatbotGUI:
         self.chat_history.see(tk.END)
 
     # generally, we want to the pop the entire group if the chain is completed
-    def manage_state(self, new_state):
+    def manage_state(self, new_state, prompt_to_save=None):
             current_state = self.chat_stack[-1]
             if new_state == "normal":
                 if current_state in self.IDENTITY_TASK_STATES:
                     while self.chat_stack and self.chat_stack[-1] in self.IDENTITY_TASK_STATES:
-                        self.chat_stack.pop()
+                        state_to_pop = self.chat_stack.pop()
+                        if state_to_pop in self.state_prompts:
+                            del self.state_prompts[state_to_pop]
                 elif current_state in self.DISCOVER_TASK_STATES:
                     while self.chat_stack and self.chat_stack[-1] in self.DISCOVER_TASK_STATES:
-                        self.chat_stack.pop()
+                        state_to_pop = self.chat_stack.pop()
+                        if state_to_pop in self.state_prompts:
+                            del self.state_prompts[state_to_pop]
                 elif current_state in self.EMAIL_TASK_STATES:
                     while self.chat_stack and self.chat_stack[-1] in self.EMAIL_TASK_STATES:
-                        self.chat_stack.pop()      
+                        state_to_pop = self.chat_stack.pop()
+                        if state_to_pop in self.state_prompts:
+                            del self.state_prompts[state_to_pop]   
                 elif len(self.chat_stack) > 1:
-                    self.chat_stack.pop()
+                    state_to_pop = self.chat_stack.pop()
+                    if state_to_pop in self.state_prompts:
+                            del self.state_prompts[state_to_pop]           
             elif new_state != current_state:
                 self.chat_stack.append(new_state)
-
+                if prompt_to_save:
+                    self.state_prompts[new_state] = prompt_to_save
+    
     def get_bot_response(self, query):
         current_state = self.chat_stack[-1]
         response = ""
@@ -213,25 +240,36 @@ class ChatbotGUI:
         if query.lower() == "cancel":
             if current_state in self.IDENTITY_TASK_STATES:
                 while self.chat_stack and self.chat_stack[-1] in self.IDENTITY_TASK_STATES:
-                    self.chat_stack.pop()
+                    state_to_pop = self.chat_stack.pop()
+                    if state_to_pop in self.state_prompts:
+                        del self.state_prompts[state_to_pop]
                 response = f"I've cancelled the identity task. We are now in the '{self.chat_stack[-1]}' state."
             elif current_state in self.DISCOVER_TASK_STATES:
                 while self.chat_stack and self.chat_stack[-1] in self.DISCOVER_TASK_STATES:
-                    self.chat_stack.pop()
+                    state_to_pop = self.chat_stack.pop()
+                    if state_to_pop in self.state_prompts:
+                        del self.state_prompts[state_to_pop]
                 response = f"I've cancelled the help task. We are now in the '{self.chat_stack[-1]}' state."
             elif current_state in self.EMAIL_TASK_STATES:
                 while self.chat_stack and self.chat_stack[-1] in self.EMAIL_TASK_STATES:
-                    self.chat_stack.pop()
+                    state_to_pop = self.chat_stack.pop()
+                    if state_to_pop in self.state_prompts:
+                        del self.state_prompts[state_to_pop]
+                response = f"I've cancelled the email task. We are now in the '{self.chat_stack[-1]}' state."
             elif len(self.chat_stack) > 1:
-                self.chat_stack.pop()
-                response = f"I've cancelled the ongoing action. We are now in the '{self.chat_stack[-1]}' state. What now?"
+                state_to_pop = self.chat_stack.pop()
+                if state_to_pop in self.state_prompts:
+                        del self.state_prompts[state_to_pop]
+                response = f"I've cancelled the ongoing task. We are now in the '{self.chat_stack[-1]}' state. What now?"
             else:
-                response = "There is no ongoing action to cancel."
+                response = "There is no ongoing task to cancel."
             self.add_chat_message(response, "bot")
             return
         elif query.lower() == "go back":
             if len(self.chat_stack) > 1:
-                self.chat_stack.pop()
+                state_popped = self.chat_stack.pop()
+                if state_popped in self.state_prompts:
+                    del self.state_prompts[state_popped]
                 response = f"Okay, I've gone back one step. We are now in the '{self.chat_stack[-1]}' state."
             else:
                 response = "There's nothing to go back to."
@@ -241,25 +279,43 @@ class ChatbotGUI:
             response = f"The chatbot is currently in the '{current_state}' state."
             self.add_chat_message(response, "bot")
             return
-        # TODO add command 'what now' to explain what the user can do now (especially for the email actions)
-        # TODO add command 'repeat' to repeat the bot response to the initiation of the ongoing action (useful in 'go back' cases)
+        elif query.lower() == "repeat":
+            current_state = self.chat_stack[-1]
+            if current_state == "normal":
+                response = "There's no active task to repeat. How can I help?"
+            elif current_state in self.state_prompts:
+                response = self.state_prompts[current_state]
+            else:
+                response = f"I'm in the '{current_state}' state, but I don't have a specific prompt to repeat. What would you like to do?"
+            self.add_chat_message(response, "bot")
+            return
+        elif query.lower() == "what now" or query.lower() == "what now?":
+            current_state = self.chat_stack[-1]
+            default_fallback = f"I'm in the '{current_state}' state. You can try 'cancel' to exit this task or 'go back' to the previous step."
+            response = self.what_now_prompts.get(current_state, default_fallback)
+            self.add_chat_message(response, "bot")
+            return
 
         intent, subintent, score = self.intent_classifier.classify(query, threshold=0.2)
+        prompt_to_save = None
 
         # Play with the order here to allow certain things mid-action
         if current_state in self.IDENTITY_TASK_STATES: # Always want this handled first, I don't want users initiating anything else during this
             response_text, new_name, new_state = self.identity_handler.get_identity_response(query, self.username, subintent="none", current_state=current_state)
             self.username = new_name
-            self.manage_state(new_state)
+            prompt_to_save = response_text if new_state != "normal" else None
+            self.manage_state(new_state, prompt_to_save)
             response = response_text
         elif intent == "IdentityManagement":
             response_text, new_name, new_state = self.identity_handler.get_identity_response(query, self.username, subintent=subintent, current_state=current_state)
             self.username = new_name
-            self.manage_state(new_state)
+            prompt_to_save = response_text if new_state != "normal" else None
+            self.manage_state(new_state, prompt_to_save)
             response = response_text
         elif current_state in self.DISCOVER_TASK_STATES: # I think this makes sense to put here, but keep discovery initialization low
             response_text, new_state = self.discoverability_handler.get_discoverability_response(query, subintent="none", current_state=current_state)
-            self.manage_state(new_state)
+            prompt_to_save = response_text if new_state != "normal" else None
+            self.manage_state(new_state, prompt_to_save)
             response = response_text
         elif intent == "SmallTalk":
             raw_response = self.small_talk_handler.get_small_talk_response(query, threshold=0.4)
@@ -274,14 +330,17 @@ class ChatbotGUI:
             new_state, response_text, session_data, action_data = self.email_handler.handle_email_task(current_state, subintent, query, self.session_id)
             if session_data is not None:
                 self.session_id, self.email_address = session_data
-            self.manage_state(new_state if new_state else "normal")
+            managed_new_state = new_state if new_state else "normal"
+            prompt_to_save = response_text if managed_new_state != "normal" else None
+            self.manage_state(managed_new_state, prompt_to_save)
             response = response_text
             if action_data:
                 if action_data['action'] == 'view_email':
                     EmailViewer(self.root, action_data['data'])
         elif intent == "Discoverability":
             response_text, new_state = self.discoverability_handler.get_discoverability_response(query, subintent=subintent, current_state=current_state)
-            self.manage_state(new_state)
+            prompt_to_save = response_text if new_state != "normal" else None
+            self.manage_state(new_state, prompt_to_save)
             response = response_text
         else:
             if intent == "Unrecognized":
