@@ -28,6 +28,7 @@ Phrase,Intent,Subintent
 "check my email",Email,list_emails
 "show me my messages",Email,list_emails
 "what is in my inbox",Email,list_emails
+"view my inbox",Email,list_emails
 "list my emails",Email,list_emails
 "get my inbox",Email,list_emails
 "check for new mail",Email,update_inbox
@@ -59,6 +60,7 @@ Phrase,Intent,Subintent
 "download",Email,download_email
 "save this message",Email,download_email
 "delete email 45",Email,delete_email
+"delete emails 6 and 7",Email,delete_email
 "get rid of that message",Email,delete_email
 "i want to delete email 3",Email,delete_email
 "remove email 1 from my inbox",Email,delete_email

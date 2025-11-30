@@ -16,7 +16,6 @@ EMAIL_AWAITING_STATES = [
     'awaiting_delete_all_confirm'
 ]
 EMAIL_LOOP_STATES = ['email_manage_loop']
-EMAIL_TASK_STATES = EMAIL_AWAITING_STATES + EMAIL_LOOP_STATES
 
 class EmailResponseGenerator:
     def __init__(self):
@@ -106,9 +105,9 @@ class EmailHandler:
         processed_text = text.lower().replace(subintent, "").strip()
         if "all" in processed_text:
             return "all"
-        match = re.search(r'([\d,\s\-]+)$', processed_text)
-        if match:
-            return match.group(1).strip()
+        matches = re.findall(r'(\d+-\d+|\d+)', processed_text)  
+        if matches:
+            return ",".join(matches)
         return None
         
     def _get_mail_id_from_index(self, session, index_str):
@@ -327,8 +326,9 @@ class EmailHandler:
                     response = self.responder.generate_response({'type': 'manage_session'})
                     new_state = 'email_manage_loop'
                 else: 
-                    response = self.responder.generate_response({'type': 'manage_session'})
-                    new_state = 'email_manage_loop'    
+                    #response = self.responder.generate_response({'type': 'manage_session'})
+                    #new_state = 'email_manage_loop'
+                    pass # Should pass down now
                 return (new_state, response, new_session_data, action_data)
             pass
 

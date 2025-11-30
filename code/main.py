@@ -7,7 +7,7 @@ from small_talk import SmallTalkHandler
 from question_answer import QAHandler
 from identity import IdentityManagement
 from discoverability import Discoverability
-from transaction import EmailHandler, EMAIL_TASK_STATES
+from transaction import EmailHandler, EMAIL_AWAITING_STATES, EMAIL_LOOP_STATES
 
 BG_COLOR = "#ece5dd"
 CHAT_BG = "#ffffff"
@@ -106,7 +106,9 @@ class ChatbotGUI:
         self.state_prompts = {}
         self.IDENTITY_TASK_STATES = {"awaiting_name", "awaiting_name_confirm"}
         self.DISCOVER_TASK_STATES = {"general_help_loop", "capabilities_help"}
-        self.EMAIL_TASK_STATES = set(EMAIL_TASK_STATES)
+        self.EMAIL_TASK_STATES = set(EMAIL_LOOP_STATES + EMAIL_AWAITING_STATES)
+        self.EMAIL_LOOP_STATES = set(EMAIL_LOOP_STATES)
+        self.EMAIL_AWAITING_STATES = set(EMAIL_AWAITING_STATES)
         self.intent_classifier = IntentClassifier()
         self.small_talk_handler = SmallTalkHandler()
         self.qa_handler = QAHandler()
@@ -236,6 +238,8 @@ class ChatbotGUI:
         current_state = self.chat_stack[-1]
         response = ""
         action_data = None
+        prompt_to_save = None
+        handled = False 
 
         if query.lower() == "cancel":
             if current_state in self.IDENTITY_TASK_STATES:
@@ -297,52 +301,60 @@ class ChatbotGUI:
             return
 
         intent, subintent, score = self.intent_classifier.classify(query, threshold=0.2)
-        prompt_to_save = None
-
-        # Play with the order here to allow certain things mid-action
-        if current_state in self.IDENTITY_TASK_STATES: # Always want this handled first, I don't want users initiating anything else during this
+        
+        if current_state in self.IDENTITY_TASK_STATES:
+            handled = True
             response_text, new_name, new_state = self.identity_handler.get_identity_response(query, self.username, subintent="none", current_state=current_state)
             self.username = new_name
             prompt_to_save = response_text if new_state != "normal" else None
             self.manage_state(new_state, prompt_to_save)
             response = response_text
-        elif intent == "IdentityManagement":
+        elif current_state in self.DISCOVER_TASK_STATES:
+            handled = True
+            response_text, new_state = self.discoverability_handler.get_discoverability_response(query, subintent="none", current_state=current_state)
+            prompt_to_save = response_text if new_state != "normal" else None
+            self.manage_state(new_state, prompt_to_save)
+            response = response_text
+        elif intent == "Email" or current_state in self.EMAIL_TASK_STATES:
+            pass_signal = "I'm not sure how to handle that email request."
+            new_state, response_text, session_data, action_data = self.email_handler.handle_email_task(current_state, subintent, query, self.session_id)
+            if response_text != pass_signal:
+                handled = True
+                if session_data is not None:
+                    self.session_id, self.email_address = session_data
+                managed_new_state = new_state if new_state else "normal"
+                prompt_to_save = response_text if managed_new_state != "normal" else None
+                self.manage_state(managed_new_state, prompt_to_save)
+                response = response_text
+                if action_data:
+                    if action_data['action'] == 'view_email':
+                        EmailViewer(self.root, action_data['data'])
+            pass 
+        if not handled and intent == "IdentityManagement":
+            handled = True
             response_text, new_name, new_state = self.identity_handler.get_identity_response(query, self.username, subintent=subintent, current_state=current_state)
             self.username = new_name
             prompt_to_save = response_text if new_state != "normal" else None
             self.manage_state(new_state, prompt_to_save)
             response = response_text
-        elif current_state in self.DISCOVER_TASK_STATES: # I think this makes sense to put here, but keep discovery initialization low
-            response_text, new_state = self.discoverability_handler.get_discoverability_response(query, subintent="none", current_state=current_state)
-            prompt_to_save = response_text if new_state != "normal" else None
-            self.manage_state(new_state, prompt_to_save)
-            response = response_text
-        elif intent == "SmallTalk":
+        elif not handled and intent == "SmallTalk":
+            handled = True
             raw_response = self.small_talk_handler.get_small_talk_response(query, threshold=0.4)
             if "{username}" in raw_response:
                 name_to_insert = self.username if self.username else "friend"
                 response = raw_response.replace("{username}", name_to_insert)
             else:
                 response = raw_response
-        elif intent == "QuestionAnswering":
+        elif not handled and intent == "QuestionAnswering":
+            handled = True
             response = self.qa_handler.get_QA_response(query, threshold=0.65)
-        elif intent == "Email" or current_state in self.EMAIL_TASK_STATES:
-            new_state, response_text, session_data, action_data = self.email_handler.handle_email_task(current_state, subintent, query, self.session_id)
-            if session_data is not None:
-                self.session_id, self.email_address = session_data
-            managed_new_state = new_state if new_state else "normal"
-            prompt_to_save = response_text if managed_new_state != "normal" else None
-            self.manage_state(managed_new_state, prompt_to_save)
-            response = response_text
-            if action_data:
-                if action_data['action'] == 'view_email':
-                    EmailViewer(self.root, action_data['data'])
-        elif intent == "Discoverability":
+        elif not handled and intent == "Discoverability":
+            handled = True
             response_text, new_state = self.discoverability_handler.get_discoverability_response(query, subintent=subintent, current_state=current_state)
             prompt_to_save = response_text if new_state != "normal" else None
             self.manage_state(new_state, prompt_to_save)
             response = response_text
-        else:
+        if not handled:
             if intent == "Unrecognized":
                 response = "Forgive me, but I'm unable to recognize what you are saying."
             else:
