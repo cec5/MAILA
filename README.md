@@ -16,8 +16,6 @@ It features a graphical user interface (GUI) built with Tkinter and is designed 
 * **Intent Classification:** Understands user requests and categorizes them into intents like "Email," "SmallTalk," "QuestionAnswering," "IdentityManagement," or "Discoverability".
 * **State Management:** Manages a conversational state, allowing for multi-step tasks like confirming actions or prompting for more information.
 
----
-
 ## Requirements
 
 ### 1. Python 3
