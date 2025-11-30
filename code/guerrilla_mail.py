@@ -78,6 +78,9 @@ class GuerrillaSession:
 
             response.raise_for_status()
             response_json = response.json()
+
+            if not isinstance(response_json, dict):
+                return response_json
             
             if 'sid_token' in response_json and response_json['sid_token'] != self.sid_token:
                 self.sid_token = response_json['sid_token']
