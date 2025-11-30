@@ -57,7 +57,7 @@ class Discoverability:
             ],
             "HelpCommands": [
                 "I have five universal commands:\nWHERE AM I: tells you what state the chatbot current is in.\nGO BACK: rewinds to the last step\nCANCEL: cancels any ongoing action in its entirety\nREPEAT: repeats the prompt of the current task.\nWHAT NOW: gives you options on what to do next.",
-                "My universal commands are:\n  - 'where am i?' (tells you the current state)\n  - 'go back' (goes back one step)\n  - 'cancel' (stops any task)\n  -  'repeat' (repeats the prompt of the current ask)\n  -  'what now' (tells you what to do next based on the current state)",
+                "My universal commands are:\n  - 'where am i?' (tells you the current state)\n  - 'go back' (goes back one step)\n  - 'cancel' (stops any task)\n  -  'repeat' (repeats the prompt of the current task)\n  -  'what now' (tells you what to do next based on the current state)",
                 "You can use these commands anytime:\n'where am i?' will show your current state.\n'go back' reverts one step in a task.\n'cancel' exits the current task completely\n'repeat' repeats the dialogue of the current task.\n'what now' informs you of how to progress from the current task."
             ],
             "Identification": [
