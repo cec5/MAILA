@@ -2,10 +2,10 @@ Flow 1: The Standard Email Task (Start to Finish)
 Goal: Test the primary "happy path" functionality of the email transaction module.
 
 1.  User: start a new session
-2.  Maila: (Should create a session, provide the new email address and Session ID)
+2.  Maila: (Should create a session, provide email/SID, and return to 'normal' state)
 3.  (External): Send 3 test emails (e.g., "Test 1," "Test 2," "Test 3") to the new email address.
 4.  User: check my inbox
-5.  Maila: (Should list all 3 emails with indices 1, 2, 3)
+5.  Maila: (Should list all 3 emails and enter 'email_manage_loop' state)
 6.  User: view email 2
 7.  Maila: (Should confirm and launch the EmailViewer window for "Test 2")
 8.  User: download email 1
@@ -47,10 +47,10 @@ Flow 3: The Confused User (Prompts & Universal Commands)
 Goal: Test clarification prompts, error handling, and universal commands.
 
 1.  User: start a new session
-2.  Maila: (Provides email/SID and enters 'email_manage_loop')
+2.  Maila: (Provides email/SID and returns to 'normal' state)
 3.  (External): Send 3 test emails to the address.
 4.  User: check inbox
-5.  Maila: (Lists the 3 emails)
+5.  Maila: (Lists the 3 emails and enters 'email_manage_loop' state)
 6.  User: delete
 7.  Maila: (Should ask for clarification: "Which email(s)...?" and enter 'awaiting_delete_index' state)
 8.  User: what now?
@@ -114,13 +114,13 @@ Goal: Test the identity flow from an unknown state and the 'repeat' command.
 --------------------------------------------------
 
 Flow 6: Non-Transactional Interruptions (Q&A, Small Talk)
-Goal: Test the Maila's ability to handle Q&A and Small Talk during an active email session.
+Goal: Test Maila's ability to handle Q&A and Small Talk during an active email session.
 
 1.  User: start a new session
-2.  Maila: (Provides email/SID and enters 'email_manage_loop')
+2.  Maila: (Provides email/SID and returns to 'normal' state)
 3.  (External): Send 3 test emails to the address.
 4.  User: check inbox
-5.  Maila: (Lists the 3 emails)
+5.  Maila: (Lists the 3 emails and enters 'email_manage_loop' state)
 6.  User: what is the capital of France?
 7.  Maila: (Should answer the Q&A question: "The capital of France is Paris.")
 8.  User: where am i
@@ -134,14 +134,16 @@ Goal: Test the Maila's ability to handle Q&A and Small Talk during an active ema
 16. User: cancel
 17. Maila: (Should cancel the email task and return to 'normal' state)
 
+--------------------------------------------------
+
 Flow 7: Invalid Index and State Mismatch
-Goal: Test the Maila's error handling for invalid inputs and actions on non-existent data.
+Goal: Test Maila's error handling for invalid inputs and actions on non-existent data.
 
 1.  User: start a new session
-2.  Maila: (Provides email/SID and enters 'email_manage_loop')
+2.  Maila: (Provides email/SID and returns to 'normal' state)
 3.  (External): Send 3 test emails to the address.
 4.  User: check inbox
-5.  Maila: (Lists the 3 emails)
+5.  Maila: (Lists the 3 emails and enters 'email_manage_loop' state)
 6.  User: delete emails 1, 3
 7.  Maila: (Should confirm deletion of 2 emails)
 8.  User: list emails
@@ -162,14 +164,14 @@ Goal: Test the Maila's error handling for invalid inputs and actions on non-exis
 --------------------------------------------------
 
 Flow 8: Deep Stack Interruption and 'go back'
-Goal: Test the integrity of the LIFO chat_stack with multiple nested interruptions and the 'go back' command.
+Goal: Test the integrity of the LIFO chat_stack with multiple nested interruptions.
 
 1.  User: start a new session
-2.  Maila: (Provides email/SID and enters 'email_manage_loop')
+2.  Maila: (Provides email/SID and returns to 'normal' state. Stack: ['normal'])
 3.  User: delete
-4.  Maila: (Enters 'awaiting_delete_index'. Stack is ['normal', 'email_manage_loop', 'awaiting_delete_index'])
+4.  Maila: (Enters 'awaiting_delete_index'. Stack is ['normal', 'awaiting_delete_index'])
 5.  User: help
-6.  Maila: (Enters 'general_help_loop'. Stack is [..., 'awaiting_delete_index', 'general_help_loop'])
+6.  Maila: (Enters 'general_help_loop'. Stack is ['normal', 'awaiting_delete_index', 'general_help_loop'])
 7.  User: change my name
 8.  Maila: (Enters 'awaiting_name'. Stack is [..., 'general_help_loop', 'awaiting_name'])
 9.  User: go back
@@ -201,10 +203,10 @@ Flow 9: Ambiguous Wording and Confirmation
 Goal: Test the classifier's ability to handle synonyms and the confirmation state's strictness.
 
 1.  User: I need a new email
-2.  Maila: (Should interpret as 'start_session', provide email/SID, and enter 'email_manage_loop')
+2.  Maila: (Should interpret as 'start_session', provide email/SID, and return to 'normal' state)
 3.  (External): Send 3 test emails to the address.
 4.  User: show me what I've got
-5.  Maila: (Should interpret as 'list_emails' and list the 3 emails)
+5.  Maila: (Should interpret as 'list_emails', list the 3 emails, and enter 'email_manage_loop' state)
 6.  User: I want to read number 3
 7.  Maila: (Should interpret as 'view_email' and open the EmailViewer for email 3)
 8.  User: get rid of number 1
