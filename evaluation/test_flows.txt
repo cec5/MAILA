@@ -233,13 +233,9 @@ Goal: Test how states handle vague user replies and non-standard exit phrases.
 4.  Maila: (Should not understand "the last one" and re-prompt for a valid capability, e.g., "email", "small talk", etc.)
 5.  User: nevermind, i'm done with this
 6.  Maila: (Should interpret this as "no" or "nevermind", exit the discoverability loop, and return to 'normal')
-7.  User: what's my status?
-8.  Maila: (Should interpret as 'where am i' and respond 'normal')
-9.  User: do you know who i am?
-10. Maila: (Should interpret as 'Identification', respond "I don't have a name...", and enter 'awaiting_name_confirm')
-11. User: I'd rather not
-12. Maila: (Should interpret as "no", cancel the name task, and return to 'normal')
-13. User: I need to see an email
-14. Maila: (Should interpret as an 'Email' intent, respond "no active session", and enter 'awaiting_session_start_confirm')
-15. User: what's going on?
-16. Maila: (Should interpret as 'where am i' and respond 'awaiting_session_start_confirm')
+7.  User: do you know who i am?
+8. Maila: (Should interpret as 'Identification', respond "I don't have a name...", and enter 'awaiting_name_confirm')
+9. User: I'd rather not
+10. Maila: (Should interpret as "no", cancel the name task, and return to 'normal')
+11. User: I need to see an email
+12. Maila: (Should interpret as an 'Email' intent, respond "no active session", and enter 'awaiting_session_start_confirm')

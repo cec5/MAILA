@@ -94,7 +94,7 @@ class EmailHandler:
         self.responder = EmailResponseGenerator()
 
     def _extract_session_id(self, text):
-        match = re.search(r'\b([a-z0-9]{24})\b', text.lower())
+        match = re.search(r'\b([a-z0-9]{26})\b', text.lower())
         return match.group(1) if match else None
 
     def _extract_email_id(self, text):
