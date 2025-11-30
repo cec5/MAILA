@@ -309,6 +309,14 @@ class ChatbotGUI:
             prompt_to_save = response_text if new_state != "normal" else None
             self.manage_state(new_state, prompt_to_save)
             response = response_text
+        elif intent == "IdentityManagement":
+            handled = True
+            response_text, new_name, new_state = self.identity_handler.get_identity_response(query, self.username, subintent=subintent, current_state=current_state)
+            self.username = new_name
+            prompt_to_save = response_text if new_state != "normal" else None
+            if new_state != "normal" or current_state in self.IDENTITY_TASK_STATES:
+                self.manage_state(new_state, prompt_to_save)     
+            response = response_text
         elif current_state in self.DISCOVER_TASK_STATES:
             handled = True
             response_text, new_state = self.discoverability_handler.get_discoverability_response(query, subintent="none", current_state=current_state)
@@ -330,14 +338,7 @@ class ChatbotGUI:
                     if action_data['action'] == 'view_email':
                         EmailViewer(self.root, action_data['data'])
             pass 
-        if not handled and intent == "IdentityManagement":
-            handled = True
-            response_text, new_name, new_state = self.identity_handler.get_identity_response(query, self.username, subintent=subintent, current_state=current_state)
-            self.username = new_name
-            prompt_to_save = response_text if new_state != "normal" else None
-            self.manage_state(new_state, prompt_to_save)
-            response = response_text
-        elif not handled and intent == "SmallTalk":
+        if not handled and intent == "SmallTalk":
             handled = True
             raw_response = self.small_talk_handler.get_small_talk_response(query, threshold=0.4)
             if "{username}" in raw_response:
