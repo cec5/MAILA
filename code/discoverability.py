@@ -106,8 +106,6 @@ class Discoverability:
         elif current_state == "capabilities_help":
             if any(word in query.lower() for word in ["no","nevermind"]):
                 return (self._get_random_response("exit_flow"), "normal")
-            elif any(word in query.lower() for word in ["yes","ok","alright"]):
-                return (self._get_random_response("capabilities_help_reply"), "capabilities_help")
             elif any(word in query.lower() for word in ["small","talk","talking","conversation","chat","chatting"]):
                 return (self._get_random_response("capabilities_help_smalltalk"), "normal")
             elif any(word in query.lower() for word in ["question","questions","answer","answers","answering"]):
@@ -116,6 +114,8 @@ class Discoverability:
                 subintent = "Identification"
             elif any(word in query.lower() for word in ["email","emails"]):
                 return (self._get_random_response("capabilities_help_email"), "normal") 
+            elif any(word in query.lower() for word in ["yes","ok","alright"]):
+                return (self._get_random_response("capabilities_help_reply"), "capabilities_help")
             else:
                 return (self._get_random_response("capabilities_help_error"), "capabilities_help")
         if subintent == "HelpGeneral":

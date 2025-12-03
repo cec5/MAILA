@@ -248,13 +248,13 @@ class EmailHandler:
                 if 'yes' in user_input.lower():
                     session = GuerrillaSession()
                     session.restore_session(sid_token=session_id)
+                    session.get_inbox_list() 
                     deleted_ids = session.delete_emails('all')
-                    
                     if deleted_ids is not None:
                         result_text = f"Successfully deleted {len(deleted_ids)} email(s)."
                         response = self.responder.generate_response({'type': 'delete_emails', 'result_text': result_text})
                     else:
-                        response = "Sorry, I failed to delete those emails."
+                        response = "Sorry, I failed to delete those emails. (Did you already delete them?)"
                     new_state = 'email_manage_loop'
                 else:
                     response = "Okay, I've cancelled the deletion."
@@ -342,7 +342,7 @@ class EmailHandler:
             new_state = None
         except ValueError as e:
             print(f"[TRANSACTION_ERROR] Value error: {e}")
-            response = f"An error occurred: {e}"
+            response = f"I ran into a value error, did you put in a valid email number? Please double check your inbox and try again."
             new_state = current_state
         except Exception as e:
             print(f"[TRANSACTION_ERROR] An unexpected error occurred: {e}")
