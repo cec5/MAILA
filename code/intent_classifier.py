@@ -10,6 +10,10 @@ from nltk.tokenize import word_tokenize
 
 pos_map = {'ADJ': 'a', 'ADV': 'r', 'NOUN': 'n', 'VERB': 'v'}
 
+# Very similar to the labs
+# Originally each of the modules (apart from QA/Small Talk) had their own intent classification as seen here
+# This would determine the user's general intent, and the speciailzed ones would determine the subintent
+# Instead I decided to just do subintents here and combine all the intents and subintents into one big intent database
 class IntentClassifier:
     def __init__(self, data_path="datasets/intents_data.csv"):
         self.lemmatizer = WordNetLemmatizer()
@@ -34,6 +38,7 @@ class IntentClassifier:
             self.subintents = df['Subintent'].tolist()
             self.vectorizer = TfidfVectorizer(analyzer='word')
             self.intent_phrases_tfidf = self.vectorizer.fit_transform(self.phrases)
+        # I've never actually managed to cause this, unless you mess with the actual CSV, but you find a way just by running Maila please tell me
         except Exception as e:
             print(f"[SYSTEM ERROR]: Error with loading or training intent data: {e}")
             self.vectorizer = None

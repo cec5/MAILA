@@ -5,8 +5,9 @@ import random
 class IdentityManagement:
     def __init__(self):
         self.stopwords = set(stopwords.words('english'))
+        # When Maila extracts one's name from a query, it additionally remove these words as an extra filter
         self.name_ignore = ["call","name","my","to","please","yes","is","i","am","know","who","tell","change","want","wish","rename","switch","update","remember"]
-        self.templates = {
+        self.templates = { # Some templates to vary responses
             "confirm_name_change": [
                 "Very well! Simply tell me your name please!",
                 "Okay, I'm ready. What would you like me to call you?",
@@ -102,7 +103,7 @@ class IdentityManagement:
         query = query.strip()
         response = ""
         if current_state == "awaiting_name_confirm":
-            if any(word in query.lower() for word in ["yes","ok","alright"]):
+            if any(word in query.lower() for word in ["yes","ok","alright","affirmative"]):
                 response = self._get_random_response("confirm_name_change")
                 return (response, username, "awaiting_name")
             elif any(word in query.lower() for word in ["no","nevermind"]):
@@ -111,6 +112,9 @@ class IdentityManagement:
             else:
                 response = self._get_random_response("confirm_name_change_error")
                 return (response, username, "awaiting_name_confirm")
+        # When you ask Maila to set your name without telling it your name, it tells you to input your name and sets the raw query as the name
+        # While it may cause some brief confusion, it also allows Users to set their name as "Chris the Great" or other titles that wouldn't make it through the normal filtering process
+        # Whether this a good or bad choice, eh I don't don't, but I left it in since day 1 so you can decide
         elif current_state == "awaiting_name":
             if query:
                 new_name = query.strip().capitalize()

@@ -20,6 +20,7 @@ BUTTON_FG = "#ffffff"
 FONT = ("Helvetica", 11)
 FONT_BOLD = ("Helvetica", 11, "bold")
 
+# Self explantory, creates the GUI for the email viewer
 class EmailViewer(tk.Toplevel):
     def __init__(self, master, email_data):
         super().__init__(master)
@@ -93,6 +94,7 @@ class EmailViewer(tk.Toplevel):
         self.grab_set()
         self.lift()
 
+# Beleive it or not switching from command line to GUI caused a lot of problems
 class ChatbotGUI:
     def __init__(self, root):
         self.root = root
@@ -102,7 +104,7 @@ class ChatbotGUI:
         self.username = None
         self.session_id = None
         self.email_address = None
-        self.chat_stack = ["normal"]
+        self.chat_stack = ["normal"] # This is what's used for "context tracking", I call it context tracking but state management would be more accurate, Maila is not that advanced
         self.state_prompts = {}
         self.IDENTITY_TASK_STATES = {"awaiting_name", "awaiting_name_confirm"}
         self.DISCOVER_TASK_STATES = {"general_help_loop", "capabilities_help"}
@@ -206,7 +208,7 @@ class ChatbotGUI:
         self.chat_history.config(state=tk.DISABLED)
         self.chat_history.see(tk.END)
 
-    # generally, we want to the pop the entire group if the chain is completed
+    # Manages the chat stack as a crude form of context tracking, also builds Maila's prompts for the 'repeat' command
     def manage_state(self, new_state, prompt_to_save=None):
             current_state = self.chat_stack[-1]
             if new_state == "normal":
@@ -234,6 +236,7 @@ class ChatbotGUI:
                 if prompt_to_save:
                     self.state_prompts[new_state] = prompt_to_save
     
+    # This is the main function that determines Maila's response
     def get_bot_response(self, query):
         current_state = self.chat_stack[-1]
         response = ""
@@ -241,6 +244,7 @@ class ChatbotGUI:
         prompt_to_save = None
         handled = False 
 
+        # Maila first checks if the query is a command, for commands only it has to be an exact match
         if query.lower() == "cancel":
             if current_state in self.IDENTITY_TASK_STATES:
                 while self.chat_stack and self.chat_stack[-1] in self.IDENTITY_TASK_STATES:
@@ -300,8 +304,11 @@ class ChatbotGUI:
             self.add_chat_message(response, "bot")
             return
 
+        # Next, Maila determines the user's intent
         intent, subintent, score = self.intent_classifier.classify(query, threshold=0.2)
         
+        # Maila will either route by intent or by the current state, the order of states determine if they would take priority over certain tasks
+        # Please read the report if you want a detailed breakdown, or just analyze my code
         if current_state in self.IDENTITY_TASK_STATES:
             handled = True
             response_text, new_name, new_state = self.identity_handler.get_identity_response(query, self.username, subintent="none", current_state=current_state)
@@ -323,6 +330,9 @@ class ChatbotGUI:
             prompt_to_save = response_text if new_state != "normal" else None
             self.manage_state(new_state, prompt_to_save)
             response = response_text
+
+        # Email states can uniquely pass down intents if it doesn't find a match within transaction.py
+        # For instance, "How are you" while in (general) email loop will not be matched and be passed through here and on to Small Talk
         elif intent == "Email" or current_state in self.EMAIL_TASK_STATES:
             pass_signal = "I'm not sure how to handle that email request."
             new_state, response_text, session_data, action_data = self.email_handler.handle_email_task(current_state, subintent, query, self.session_id)
@@ -338,6 +348,7 @@ class ChatbotGUI:
                     if action_data['action'] == 'view_email':
                         EmailViewer(self.root, action_data['data'])
             pass 
+        # The order of the intents here don't matter, as the query is only labeled with one intent
         if not handled and intent == "SmallTalk":
             handled = True
             raw_response = self.small_talk_handler.get_small_talk_response(query, threshold=0.4)
@@ -359,6 +370,7 @@ class ChatbotGUI:
             if intent == "Unrecognized":
                 response = "Forgive me, but I'm unable to recognize what you are saying."
             else:
+                # This only really happens if the intent classifier's dataset fails to load, usually it's a permission error
                 response = "[SYSTEM ERROR]: An internal classification error occurred."
         self.add_chat_message(response, "bot")
 

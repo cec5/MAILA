@@ -5,6 +5,7 @@ from guerrilla_mail import GuerrillaSession
 from requests.exceptions import RequestException, ConnectionError, HTTPError
 from urllib3.exceptions import NameResolutionError
 
+# Awaiting states mean Maila is looking for confimation or specificaiton, and will generally attempt to force the user to provide it 
 EMAIL_AWAITING_STATES = [
     'awaiting_session_start_confirm',
     'awaiting_session_restore_confirm',
@@ -15,6 +16,7 @@ EMAIL_AWAITING_STATES = [
     'awaiting_download_index',
     'awaiting_delete_all_confirm'
 ]
+# Originally there were more of them but I decided to merge them,
 EMAIL_LOOP_STATES = ['email_manage_loop']
 
 class EmailResponseGenerator:
@@ -122,6 +124,10 @@ class EmailHandler:
                 pass 
         return index_str
 
+    # I found a flaw here during user testing, if you read my report, then you know what it is or you may have run into it if you were testing it
+    # If you didn't, try to see what could potentially ruin a user's day here
+    # A hint is that it invovles states and how Maila handles those inputs
+    # Also I just realized that there no questions to actually ask Maila "What is my email" or for the session ID, apart from telling you it upon initation, whoops
     def handle_email_task(self, current_state, subintent, user_input, session_id):
         response = "I'm not sure how to handle that email request."
         new_state = current_state
@@ -331,7 +337,9 @@ class EmailHandler:
                     pass # Should pass down now
                 return (new_state, response, new_session_data, action_data)
             pass
-
+        # The first one happens if you try to make API calls without an internet connection
+        # If you haven't already started the session, then it will actually freeze for like 10 seconds likely because it's trying to resolve the hostname
+        # If you have already started the session and then cut the internet, it doesn't freeze
         except (ConnectionError, NameResolutionError) as e:
             print(f"[TRANSACTION_ERROR] Connection error: {e}")
             response = "I'm sorry, I'm having trouble connecting to the email service. Please check your internet connection and try again."

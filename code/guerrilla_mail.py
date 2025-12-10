@@ -5,6 +5,7 @@ import json
 from requests.exceptions import RequestException, HTTPError, ConnectionError
 from urllib3.exceptions import NameResolutionError
 
+# This is the API implementation
 class GuerrillaSession:
     
     API_URL = "https://api.guerrillamail.com/ajax.php"

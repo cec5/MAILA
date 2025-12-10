@@ -11,6 +11,7 @@ from nltk.tokenize import word_tokenize
 
 pos_map = {'ADJ': 'a', 'ADV': 'r', 'NOUN': 'n', 'VERB': 'v'}
 
+# Nearly identical to QA except no stopword removal
 class SmallTalkHandler:
     def __init__(self, data_path="datasets/small_talk.csv"):
         self.lemmatizer = WordNetLemmatizer()

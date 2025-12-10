@@ -87,6 +87,13 @@ class Discoverability:
     def _get_random_response(self, key):
         return random.choice(self.templates.get(key, ["An error occurred."]))
 
+    # In retrospect this is a very crude way of doing this, although this was one of the earliest features I implemented
+    # While the user first gets here via intent/subintent routing, the responses to the loop are directly fed here
+    # While Maila does try to get the user to respond in a certain way, we should ideally just use subintent routing instead of looking for the raw words
+    # Which we already do if the user directly states it, I don't even remember why I setup the help loops to look for raw words
+    # Now that I think aout the help loops were a relatively late addition compared to the (sub)intent routing here
+    # I likely wasn't thinking straight, while I largely got the coding done by mid-november it was a struggle with too many late nights
+    # But its 10:00 am on submission day and I'm just commenting, so it will stay like this
     def get_discoverability_response(self, query, subintent, current_state="normal"):
         query = query.strip()
 
